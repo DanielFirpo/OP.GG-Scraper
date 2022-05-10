@@ -17,7 +17,7 @@ async function scrapeData() {
     let rawdata = fs.readFileSync('streamers.json');
     streamers = JSON.parse(rawdata).streamers;
 
-    const browser = await puppeteer.launch({ headless: false, args: ['--no-sandbox'] });
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
 
     for (let streamer of streamers) {
 
