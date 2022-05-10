@@ -17,7 +17,7 @@ async function scrapeData() {
     let rawdata = fs.readFileSync('streamers.json');
     streamers = JSON.parse(rawdata).streamers;
 
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox']});
+    const browser = await puppeteer.launch({ headless: false, args: ['--no-sandbox'] });
 
     for (let streamer of streamers) {
 
@@ -35,51 +35,56 @@ async function scrapeData() {
             }
         });
 
-        await page.goto('https://www.op.gg/summoners/kr/' + encodeURIComponent(streamer.accountName));
+        try {
 
-        let streamerStats = await page.evaluate(async () => {
-            return await new Promise(resolve => {
-                let winsAndLosses = document.querySelector(".win-lose").textContent;
+            await page.goto('https://www.op.gg/summoners/kr/' + encodeURIComponent(streamer.accountName));
 
-                let wins = "";
-                let losses = "";
-                let doneParsingWins = false;
-                for (let character of winsAndLosses) {
-                    if (!doneParsingWins) {
-                        if (character.toLocaleLowerCase() == "w") {
-                            doneParsingWins = true
+            let streamerStats = await page.evaluate(async () => {
+                return await new Promise(resolve => {
+                    let winsAndLosses = document.querySelector(".win-lose").textContent;
+
+                    let wins = "";
+                    let losses = "";
+                    let doneParsingWins = false;
+                    for (let character of winsAndLosses) {
+                        if (!doneParsingWins) {
+                            if (character.toLocaleLowerCase() == "w") {
+                                doneParsingWins = true
+                            }
+                            else {
+                                if (character != undefined)
+                                    wins += character;
+                            }
                         }
                         else {
-                            if (character != undefined)
-                                wins += character;
+                            if (character.toLocaleLowerCase() != "l") {
+                                losses += character;
+                            }
+                            else {
+                                break;
+                            }
                         }
                     }
-                    else {
-                        if (character.toLocaleLowerCase() != "l") {
-                            losses += character;
-                        }
-                        else{
-                            break;
-                        }
-                    }
-                }
-                wins = parseInt(wins);
-                losses = parseInt(losses);
+                    wins = parseInt(wins);
+                    losses = parseInt(losses);
 
-                let lp = document.querySelector(".lp").textContent;
-                lp = lp.replace(/LP/g, '');
-                lp = lp.replace(/,/g, '');
-                lp = parseInt(lp);
+                    let lp = document.querySelector(".lp").textContent;
+                    lp = lp.replace(/LP/g, '');
+                    lp = lp.replace(/,/g, '');
+                    lp = parseInt(lp);
 
-                let ladderRank = document.querySelector(".ranking").textContent;
-                ladderRank = ladderRank.replace(/,/g, '');
-                ladderRank = parseInt(ladderRank);
+                    let ladderRank = document.querySelector(".ranking").textContent;
+                    ladderRank = ladderRank.replace(/,/g, '');
+                    ladderRank = parseInt(ladderRank);
 
-                resolve({ lp: lp, rankName: document.querySelector(".tier-rank").textContent, ladderRank: ladderRank, totalWins: wins, totalLosses: losses });
-            })
-        });
+                    resolve({ lp: lp, rankName: document.querySelector(".tier-rank").textContent, ladderRank: ladderRank, totalWins: wins, totalLosses: losses });
+                })
+            });
 
-        await page.close();
+            await page.close();
+        } catch {
+            console.log("error getting opgg data for ", streamer.streamerName, "has they account name (previously", streamer.accountName, ") been changed?")
+        }
 
         console.log("got streamer stats:", streamerStats)
 
@@ -103,7 +108,12 @@ app.get('/streamerData', (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.send(streamerData);
 })
-console.log("starting https server with key", fs.readFileSync(process.env.SSL_KEY_PATH, "utf8"), "and cert", fs.readFileSync(process.env.SSL_CERT_PATH, "utf8"), "which paths are", process.env.SSL_KEY_PATH, process.env.SSL_CERT_PATH)
+
+//production:
+// console.log("starting https server with key", fs.readFileSync(process.env.SSL_KEY_PATH, "utf8"), "and cert", fs.readFileSync(process.env.SSL_CERT_PATH, "utf8"), "which paths are", process.env.SSL_KEY_PATH, process.env.SSL_CERT_PATH)
 var httpsServer = https.createServer({key: fs.readFileSync(process.env.SSL_KEY_PATH, "utf8"), cert: fs.readFileSync(process.env.SSL_CERT_PATH, "utf8")}, app);
 
 httpsServer.listen(port);
+
+//local:
+// app.listen(port);
