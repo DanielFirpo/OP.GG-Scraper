@@ -35,11 +35,13 @@ async function scrapeData() {
             }
         });
 
+        let streamerStats = null;
+
         try {
 
             await page.goto('https://www.op.gg/summoners/kr/' + encodeURIComponent(streamer.accountName));
 
-            let streamerStats = await page.evaluate(async () => {
+            streamerStats = await page.evaluate(async () => {
                 return await new Promise(resolve => {
                     let winsAndLosses = document.querySelector(".win-lose").textContent;
 
@@ -86,12 +88,14 @@ async function scrapeData() {
             console.log("error getting opgg data for ", streamer.streamerName, "has they account name (previously", streamer.accountName, ") been changed?")
         }
 
-        console.log("got streamer stats:", streamerStats)
+        if (streamerStats) {
+            console.log("got streamer stats:", streamerStats)
 
-        streamerStats.streamerName = streamer.streamerName;
-        streamerStats.accountName = streamer.accountName;
+            streamerStats.streamerName = streamer.streamerName;
+            streamerStats.accountName = streamer.accountName;
 
-        newStreamerData.push(streamerStats);
+            newStreamerData.push(streamerStats);
+        }
     };
 
     streamerData = newStreamerData;
@@ -111,7 +115,7 @@ app.get('/streamerData', (req, res) => {
 
 //production:
 // console.log("starting https server with key", fs.readFileSync(process.env.SSL_KEY_PATH, "utf8"), "and cert", fs.readFileSync(process.env.SSL_CERT_PATH, "utf8"), "which paths are", process.env.SSL_KEY_PATH, process.env.SSL_CERT_PATH)
-var httpsServer = https.createServer({key: fs.readFileSync(process.env.SSL_KEY_PATH, "utf8"), cert: fs.readFileSync(process.env.SSL_CERT_PATH, "utf8")}, app);
+var httpsServer = https.createServer({ key: fs.readFileSync(process.env.SSL_KEY_PATH, "utf8"), cert: fs.readFileSync(process.env.SSL_CERT_PATH, "utf8") }, app);
 
 httpsServer.listen(port);
 
