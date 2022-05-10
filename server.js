@@ -103,7 +103,7 @@ app.get('/streamerData', (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.send(streamerData);
 })
-
+console.log("starting https server with key", fs.readFileSync(process.env.SSL_KEY_PATH), "and cert", fs.readFileSync(process.env.SSL_KEY_PATH), "which paths are", process.env.SSL_KEY_PATH, fs.readFileSync(process.env.SSL_KEY_PATH))
 var httpsServer = https.createServer({key: fs.readFileSync(process.env.SSL_KEY_PATH), cert: fs.readFileSync(process.env.SSL_KEY_PATH)}, app);
 
 httpsServer.listen(port);
