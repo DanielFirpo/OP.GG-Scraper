@@ -4,6 +4,7 @@ const port = 4546
 const dotenv = require("dotenv");
 const puppeteer = require("puppeteer")
 const fs = require("fs");
+var https = require('https');
 
 dotenv.config();
 
@@ -103,6 +104,6 @@ app.get('/streamerData', (req, res) => {
     res.send(streamerData);
 })
 
-app.listen(port, () => {
-    console.log(`OP.GG Scraper listening on port ${port}`)
-})
+var httpsServer = https.createServer({key: fs.readFileSync(process.env.SSL_KEY_PATH), cert: fs.readFileSync(process.env.SSL_KEY_PATH)}, app);
+
+httpsServer.listen(port);
