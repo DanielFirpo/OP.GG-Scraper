@@ -43,7 +43,7 @@ async function scrapeData() {
 
             streamerStats = await page.evaluate(async () => {
                 return await new Promise(resolve => {
-                    let winsAndLosses = document.querySelector(".win-lose").textContent;
+                    let winsAndLosses = document.querySelector(".win-lose div").textContent;
 
                     let wins = "";
                     let losses = "";
@@ -79,13 +79,13 @@ async function scrapeData() {
                     ladderRank = ladderRank.replace(/,/g, '');
                     ladderRank = parseInt(ladderRank);
 
-                    resolve({ lp: lp, rankName: document.querySelector(".tier-rank").textContent, ladderRank: ladderRank, totalWins: wins, totalLosses: losses });
+                    resolve({ lp: lp, rankName: document.querySelector(".tier").textContent, ladderRank: ladderRank, totalWins: wins, totalLosses: losses });
                 })
             });
 
             await page.close();
         } catch {
-            console.log("error getting opgg data for ", streamer.streamerName, "has they account name (previously", streamer.accountName, ") been changed?")
+            console.log("error getting opgg data for ", streamer.streamerName, "has the account name (previously", streamer.accountName, ") been changed?")
         }
 
         if (streamerStats) {
